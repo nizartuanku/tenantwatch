@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TenantWatch</title>
+<style>
+  :root{
+    --blue:#4A86D6;--teal:#2FE0C0;--ink:#0f1720;--ink2:#3a4653;--muted:#6b7885;
+    --line:#e3e8ee;--bg:#f5f7fa;--card:#fff;--shadow:0 1px 3px rgba(16,24,40,.06);
+    --crit:#c1121f;--high:#e8590c;--med:#d9a406;--low:#2f8f5b;--info:#4A86D6;
+    --crit-bg:#fdecee;--high-bg:#fdefe6;--med-bg:#fbf6e3;--low-bg:#e9f6ee;--info-bg:#eaf1fb;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5}
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px 80px}
+  header{border-bottom:1px solid var(--line);background:rgba(255,255,255,.9);backdrop-filter:blur(8px);position:sticky;top:0;z-index:10}
+  .hin{max-width:900px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:11px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;letter-spacing:-.3px}
+  .tier{margin-left:auto;font-size:12px;font-weight:700;padding:4px 11px;border-radius:20px;background:var(--info-bg);color:var(--blue);text-transform:capitalize}
+  .notice{background:var(--med-bg);border:1px solid #f0e2ad;color:#8a6d00;border-radius:9px;padding:9px 13px;font-size:13px;margin-top:16px}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:26px 0 12px;font-weight:800}
+  .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:14px;text-align:center}
+  .tile .n{font-size:26px;font-weight:800;line-height:1}
+  .tile .l{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin-top:5px}
+  .tile.crit .n{color:var(--crit)}.tile.high .n{color:var(--high)}.tile.med .n{color:var(--med)}.tile.low .n{color:var(--low)}.tile.info .n{color:var(--info)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px}
+  .addrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  select,input,button{font:inherit}
+  select,input{border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:#fff;color:var(--ink)}
+  input{flex:1;min-width:220px}
+  button{border:0;border-radius:9px;padding:9px 16px;font-weight:600;cursor:pointer;background:var(--blue);color:#fff}
+  button.ghost{background:#eef2f7;color:var(--ink2)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .hint{font-size:12.5px;color:var(--muted);margin-top:9px}
+  .tenants{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .tenant{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-family:var(--mono);font-size:13px}
+  .tenant .prov{font-family:var(--font);font-weight:700;font-size:11px;padding:2px 8px;border-radius:5px;background:var(--info-bg);color:var(--blue);text-transform:uppercase}
+  .tenant .rm{margin-left:auto;background:transparent;color:var(--muted);padding:4px 8px}
+  .finding{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:11px;box-shadow:var(--shadow);margin-bottom:11px;padding:14px 16px}
+  .finding.crit{border-left-color:var(--crit)}.finding.high{border-left-color:var(--high)}.finding.med{border-left-color:var(--med)}.finding.low{border-left-color:var(--low)}.finding.info{border-left-color:var(--info)}
+  .fhead{display:flex;gap:10px;align-items:flex-start}
+  .sev{font-size:10px;font-weight:800;letter-spacing:.5px;padding:3px 8px;border-radius:5px;text-transform:uppercase;white-space:nowrap;margin-top:1px}
+  .sev.crit{background:var(--crit-bg);color:var(--crit)}.sev.high{background:var(--high-bg);color:var(--high)}.sev.med{background:var(--med-bg);color:var(--med)}.sev.low{background:var(--low-bg);color:var(--low)}.sev.info{background:var(--info-bg);color:var(--info)}
+  .ftitle{font-weight:600;flex:1}
+  .frem{font-size:13.5px;color:var(--ink2);margin-top:7px;padding-left:2px}
+  .ftarget{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:6px}
+  .empty{text-align:center;color:var(--muted);padding:34px;border:1px dashed var(--line);border-radius:12px}
+  .foot{margin-top:30px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+  .foot a{color:var(--blue);text-decoration:none}
+  @media(max-width:640px){.tiles{grid-template-columns:repeat(3,1fr)}}
+  @media(prefers-color-scheme:dark){
+    :root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--ink2:#b7c2cd;--muted:#8b98a5;--line:#26303b}
+    header{background:rgba(13,17,23,.9)} select,input{background:#0d1117;color:var(--ink)} button.ghost{background:#21262d}
+    .tenant .prov{background:#21262d}
+  }
+</style>
+</head>
+<body>
+<header><div class="hin">
+  <span class="brand">
+    <svg width="22" height="24" viewBox="0 0 22 24"><path d="M11 1l9 5.2v10.6L11 23l-9-5.2V6.2z" fill="none" stroke="#4A86D6" stroke-width="1.6"/><path d="M11 6.5l4.3 2.5v5L11 16.5 6.7 14V9z" fill="#2FE0C0"/></svg>
+    TenantWatch
+  </span>
+  <span id="tier" class="tier">—</span>
+</div></header>
+
+<div class="wrap">
+  <div id="notice" class="notice" style="display:none"></div>
+
+  <h2>Posture</h2>
+  <div class="tiles">
+    <div class="tile crit"><div class="n" id="c-critical">0</div><div class="l">Critical</div></div>
+    <div class="tile high"><div class="n" id="c-high">0</div><div class="l">High</div></div>
+    <div class="tile med"><div class="n" id="c-medium">0</div><div class="l">Medium</div></div>
+    <div class="tile low"><div class="n" id="c-low">0</div><div class="l">Low</div></div>
+    <div class="tile info"><div class="n" id="c-info">0</div><div class="l">Info</div></div>
+  </div>
+
+  <h2>Tenants <span id="tcount" style="color:var(--muted);font-weight:600;letter-spacing:0;text-transform:none"></span></h2>
+  <div class="card">
+    <div class="addrow">
+      <select id="prov">
+        <option value="m365">Microsoft 365</option>
+        <option value="gws">Google Workspace</option>
+      </select>
+      <input id="domain" placeholder="contoso.onmicrosoft.com" autocomplete="off">
+      <button id="addbtn" onclick="addTenant()">Add tenant</button>
+      <button class="ghost" id="scanbtn" onclick="scanNow()">Scan now</button>
+    </div>
+    <div class="hint" id="addhint">Give TenantWatch read-only credentials for each tenant in your <code>tenants.json</code> — see INSTALL. Nothing leaves your server.</div>
+    <div class="tenants" id="tenants"></div>
+  </div>
+
+  <h2>Findings</h2>
+  <div id="findings"></div>
+
+  <div class="foot">
+    Self-hosted · read-only · no data leaves your network<br>
+    <a href="https://github.com/nizartuanku/tenantwatch">GitHub</a> · <a href="https://whop.com/tenantwatch">Whop</a>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+async function jget(u){const r=await fetch(u);return r.ok?r.json():Promise.reject(await r.json().catch(()=>({})))}
+async function jsend(m,u,b){const r=await fetch(u,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});const d=await r.json().catch(()=>({}));if(!r.ok)throw d;return d}
+
+async function refresh(){
+  try{
+    const s=await jget('/api/summary');
+    $('tier').textContent=s.tier;
+    for(const k of ['critical','high','medium','low','info'])$('c-'+k).textContent=s.counts[k]||0;
+    $('domain').placeholder = $('prov').value==='gws' ? 'contoso.co.id' : 'contoso.onmicrosoft.com';
+    $('tcount').textContent = s.max_targets? `(${s.targets}/${s.max_targets})` : `(${s.targets})`;
+    $('scanbtn').style.display = s.can_scan_now ? '' : 'none';
+    if(s.notice){$('notice').style.display='block';$('notice').textContent=s.notice}else{$('notice').style.display='none'}
+  }catch(e){}
+  try{
+    const t=await jget('/api/targets');
+    $('tenants').innerHTML = t.length? t.map(x=>{
+      const [p,...d]=x.Canonical.split(':');
+      const prov = p==='gws'?'Workspace':'M365';
+      return `<div class="tenant"><span class="prov">${prov}</span>${d.join(':')}<button class="rm" onclick="rm('${x.Canonical}')">Remove</button></div>`;
+    }).join('') : '<div class="hint">No tenants yet. Add one above to begin.</div>';
+  }catch(e){}
+  try{
+    const f=await jget('/api/findings');
+    const order={critical:0,high:1,medium:2,low:3,info:4};
+    f.sort((a,b)=>(order[a.severity]-order[b.severity]));
+    $('findings').innerHTML = f.length? f.map(x=>{
+      const sv=x.severity;
+      return `<div class="finding ${sv}"><div class="fhead"><span class="sev ${sv}">${sv}</span><span class="ftitle">${esc(x.title)}</span></div><div class="frem">→ ${esc(x.remediation)}</div><div class="ftarget">${esc(x.target)}</div></div>`;
+    }).join('') : '<div class="empty">No findings. Add a tenant and TenantWatch will assess its posture on the next scan.</div>';
+  }catch(e){}
+}
+function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+async function addTenant(){
+  const t=$('prov').value+':'+$('domain').value.trim().toLowerCase();
+  if(!$('domain').value.trim())return;
+  $('addbtn').disabled=true;
+  try{await jsend('POST','/api/targets',{target:t});$('domain').value='';await refresh()}
+  catch(e){alert(e.error||'Could not add tenant')}
+  $('addbtn').disabled=false;
+}
+async function rm(c){if(!confirm('Remove '+c+'?'))return;try{await jsend('DELETE','/api/targets?canonical='+encodeURIComponent(c))}catch(e){}refresh()}
+async function scanNow(){$('scanbtn').disabled=true;try{await jsend('POST','/api/scan')}catch(e){alert(e.error||'Scan failed')}$('scanbtn').disabled=false;setTimeout(refresh,1500)}
+$('prov').addEventListener('change',()=>{$('domain').placeholder=$('prov').value==='gws'?'contoso.co.id':'contoso.onmicrosoft.com'});
+refresh();setInterval(refresh,15000);
+</script>
+</body>
+</html>
