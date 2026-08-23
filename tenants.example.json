@@ -1,0 +1,17 @@
+{
+  "m365": [
+    {
+      "domain": "contoso.onmicrosoft.com",
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "client_id": "11111111-1111-1111-1111-111111111111",
+      "client_secret": "REPLACE_WITH_CLIENT_SECRET"
+    }
+  ],
+  "gws": [
+    {
+      "domain": "contoso.co.id",
+      "admin_email": "admin@contoso.co.id",
+      "service_account_json": "/etc/tenantwatch/gws-service-account.json"
+    }
+  ]
+}

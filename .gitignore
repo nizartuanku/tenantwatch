@@ -1,0 +1,5 @@
+/tenantwatch
+*.db
+tenants.json
+*-license.key
+/dist
