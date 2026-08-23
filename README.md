@@ -4,7 +4,7 @@
 
 Most small teams live entirely in M365 or Google Workspace and have never audited the security settings. TenantWatch connects read-only, checks the things that actually get organisations breached — accounts without MFA, over-permissioned third-party apps, mailboxes auto-forwarding to the outside, admin sprawl, "anyone with the link" sharing, spoofable email domains — and reports them as prioritised, self-resolving findings. Fix a problem and it clears itself on the next scan.
 
-It runs on the [Sentinel](https://github.com/nizartuanku) engine: a single Go binary, no telemetry, offline licensing. It only ever reads, and it only ever reads the tenants you give it credentials for.
+It runs on the [Hexward](https://github.com/nizartuanku) engine: a single Go binary, no telemetry, offline licensing. It only ever reads, and it only ever reads the tenants you give it credentials for.
 
 ```
 tenantwatch                       # dashboard on 127.0.0.1:8430
@@ -35,7 +35,7 @@ TenantWatch tells you what it *couldn't* assess instead of pretending everything
 - **Microsoft 365**: sign-in-activity (inactive accounts) needs Entra ID P1; per-mailbox external forwarding needs an Exchange mailbox read — both are surfaced as manual-review notes unless the permissions are present.
 - **Google Workspace**: OAuth token audit needs the Reports API; Drive external-sharing policy needs Drive settings; per-user IMAP/POP is a Gmail setting — surfaced as manual-review notes.
 - Email authentication (SPF/DKIM/DMARC) is read from public DNS; DKIM is best-effort (selectors vary), so its absence is reported as "not detected", never as broken.
-- Unlike the rest of the Sentinel line, TenantWatch needs outbound access to the Microsoft Graph / Google APIs (it reads *your* tenant, read-only). Credentials and findings stay on your server.
+- Unlike the rest of the Hexward line, TenantWatch needs outbound access to the Microsoft Graph / Google APIs (it reads *your* tenant, read-only). Credentials and findings stay on your server.
 
 ## Editions
 
@@ -62,9 +62,9 @@ cp tenants.example.json tenants.json   # fill in your read-only credentials
 
 Findings can be pushed to any webhook or to a syslog collector — point `-syslog` at [Loglight](https://github.com/nizartuanku/loglight) to correlate a tenant posture change with what your logs saw.
 
-## Part of the Sentinel line
+## Part of the Hexward line
 
-Self-hosted security tools on one engine — TLS monitoring, attack-surface discovery, canary tokens, CVE prioritisation, firewall auditing, log correlation, DMARC, and this. See the full line and the **Sentinel Suite** bundle at **[whop.com/nizar-tuanku](https://whop.com/nizar-tuanku)**.
+Self-hosted security tools on one engine — TLS monitoring, attack-surface discovery, canary tokens, CVE prioritisation, firewall auditing, log correlation, DMARC, and this. See the full line and the **Hexward Suite** bundle at **[whop.com/nizar-tuanku](https://whop.com/nizar-tuanku)**.
 
 More from Nizar Tuanku: [YouTube](https://www.youtube.com/@nizartuanku7102) · [TikTok](https://www.tiktok.com/@nizartuanku) · Instagram [@nizartuanku]
 
