@@ -31,6 +31,11 @@ type TenantState struct {
 	Domains []DomainAuth
 	Sharing SharingConfig
 
+	// SignIns is the fetched sign-in window (see SignInWindow). It is judged by
+	// the checks and then discarded — TenantWatch never stores the log itself,
+	// only the findings it produced.
+	SignIns []SignIn
+
 	// LegacyAuthEnabled is true when basic/legacy authentication protocols
 	// (IMAP/POP/SMTP AUTH, or M365 legacy auth) are still permitted tenant-wide.
 	LegacyAuthEnabled bool
@@ -60,6 +65,11 @@ const (
 	AreaEmailAuth    = "email_auth"
 	AreaConditional  = "conditional_access"
 	AreaInactiveUser = "inactive_user"
+	// AreaSignIn covers the tenant's sign-in log. On Microsoft 365 reading it
+	// needs an Entra ID P1 licence, so a provider that was refused marks this
+	// area unassessed and leaves an honest note — an unread log must never look
+	// like a clean one.
+	AreaSignIn = "signin"
 )
 
 // User is one account in the tenant, normalised across clouds.

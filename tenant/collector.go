@@ -42,7 +42,7 @@ func (c *Collector) Describe() core.ModuleInfo {
 	return core.ModuleInfo{
 		ID:              ModuleID,
 		Name:            "TenantWatch",
-		Version:         "0.1.0",
+		Version:         "0.2.0",
 		TargetKind:      "provider:domain (m365:contoso.onmicrosoft.com)",
 		DefaultInterval: 12 * time.Hour,
 		ResolveAfter:    2, // a transient API hiccup shouldn't flap a finding closed

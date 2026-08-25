@@ -39,6 +39,7 @@ func Evaluate(s TenantState) []core.Finding {
 	out = append(out, checkEmailAuth(target, s)...)
 	out = append(out, checkConditionalAccess(target, s)...)
 	out = append(out, checkInactiveUsers(target, s)...)
+	out = append(out, checkSignIns(target, s)...)
 	out = append(out, notesToFindings(target, s)...)
 
 	return out
