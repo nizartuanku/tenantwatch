@@ -34,6 +34,18 @@ type Provider struct {
 	Fetch   Fetcher
 	DNS     dnsauth.Resolver
 	BaseURL string // default https://admin.googleapis.com/admin/directory/v1
+	// ReportsURL overrides the Admin SDK Reports API root (tests).
+	ReportsURL string
+
+	// Now is injectable so the sign-in window is deterministic in tests.
+	Now func() time.Time
+}
+
+func (p *Provider) now() time.Time {
+	if p.Now != nil {
+		return p.Now()
+	}
+	return time.Now()
 }
 
 const defaultBase = "https://admin.googleapis.com/admin/directory/v1"
@@ -63,6 +75,22 @@ func (p *Provider) Snapshot(ctx context.Context, domain string) (tenant.TenantSt
 	if p.DNS != nil {
 		st.Domains = dnsauth.EmailAuth(ctx, p.DNS, domain)
 		st.Assessed[tenant.AreaEmailAuth] = true
+	}
+
+	// Login audit. Google has no premium-licence gate here, but it also reports
+	// no country and no per-event authentication strength — so two of the four
+	// detections stay silent on Workspace, and say so.
+	if events, ok, note := p.signIns(ctx, tok, p.now()); ok {
+		st.SignIns = events
+		st.Assessed[tenant.AreaSignIn] = true
+		if note != "" {
+			st.Notes = append(st.Notes, note)
+		}
+		st.Notes = append(st.Notes,
+			"Google does not report a country or the authentication strength per login, so "+
+				"two-country and admin-without-MFA sign-in checks cannot be assessed on Workspace")
+	} else {
+		st.Notes = append(st.Notes, note)
 	}
 
 	// Honest v0 limits for Google Workspace.
