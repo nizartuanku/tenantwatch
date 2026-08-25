@@ -17,6 +17,7 @@ import (
 
 	"github.com/nizartuanku/tenantwatch/dnsauth"
 	"github.com/nizartuanku/tenantwatch/tenant"
+	"time"
 )
 
 // Fetcher GETs a Graph URL with a bearer token and returns the body. Injected
@@ -33,6 +34,16 @@ type Provider struct {
 	Fetch   Fetcher
 	DNS     dnsauth.Resolver
 	BaseURL string // default https://graph.microsoft.com/v1.0
+
+	// Now is injectable so the sign-in window is deterministic in tests.
+	Now func() time.Time
+}
+
+func (p *Provider) now() time.Time {
+	if p.Now != nil {
+		return p.Now()
+	}
+	return time.Now()
 }
 
 const defaultBase = "https://graph.microsoft.com/v1.0"
@@ -98,11 +109,21 @@ func (p *Provider) Snapshot(ctx context.Context, domain string) (tenant.TenantSt
 		st.Assessed[tenant.AreaEmailAuth] = true
 	}
 
-	// Honest v0 limits: sign-in activity and per-mailbox forwarding need extra
-	// licensing/permissions, so they are surfaced as manual-review rather than
-	// silently assumed clean.
+	// Sign-in log. On a tenant without Entra ID P1 this comes back unassessed
+	// with a note naming the licence — never silence, and never a clean sheet
+	// the tenant did not earn.
+	if events, ok, note := p.signIns(ctx, tok, p.now()); ok {
+		st.SignIns = events
+		st.Assessed[tenant.AreaSignIn] = true
+		if note != "" {
+			st.Notes = append(st.Notes, note)
+		}
+	} else {
+		st.Notes = append(st.Notes, note)
+	}
+
+	// Honest v0 limit that remains.
 	st.Notes = append(st.Notes,
-		"inactive-account review needs sign-in activity (Entra ID P1) — assess manually",
 		"external mailbox auto-forwarding needs Exchange mailbox read — assess manually")
 
 	return st, nil
