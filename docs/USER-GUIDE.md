@@ -19,9 +19,23 @@ Each finding carries: severity, the affected tenant, a plain-language title, and
 - **Mailbox auto-forwards outside the org** (High) — often the first sign of a compromised mailbox. Verify with the user.
 - **Email spoofing risk** (Medium) — SPF/DKIM/DMARC gaps let anyone send mail as your domain. Raise DMARC `none → quarantine → reject`.
 
+## Sign-in Watch
+
+Configuration findings tell you a door is unlocked. **Sign-in findings tell you somebody walked through it** — so they outrank their configuration equivalents, and they are the ones to act on today.
+
+Each scan reads the last **7 days** of sign-in activity. There is no stored baseline and no learning period: the first scan is as useful as the hundredth.
+
+- **Legacy authentication succeeded** (Critical) — an IMAP/POP/SMTP client actually signed in. Legacy protocols cannot carry MFA, so that account is password-only in practice. Compare with `tenant.legacy-auth` (High), which only says the protocol is *permitted*.
+- **Admin signed in without MFA** (Critical) — an administrator completed a real sign-in with a password alone. Not a policy gap on paper; it already happened.
+- **Password spray succeeded** (Critical) — many failures across many accounts from one address, **and then one success**. Treat the account that succeeded as compromised: reset the password, revoke sessions, and check the mailbox for forwarding rules before anything else.
+- **Sign-ins from two countries too close together** (High) — one account, two countries, a gap too short to be travel. A VPN or a corporate egress abroad explains it innocently, so both sign-ins are shown and you judge.
+- **Provider flagged the sign-in as suspicious** (High) — Google's own verdict, surfaced rather than second-guessed.
+
+**Where it cannot run, it says so.** On Microsoft 365 the sign-in log needs Entra ID P1 or P2 (included in Business Premium, not in Business Basic or Standard) *and* the `AuditLog.Read.All` permission; a missing licence and a missing permission produce two different, clearly named notes. On Google Workspace there is no licence gate, but Google reports no country and no per-event authentication strength, so the two-country and admin-MFA sign-in checks stay silent there. See [INSTALL.md](INSTALL.md).
+
 ## Manual-review notes
 
-Info findings labelled **Manual review** are areas TenantWatch could not assess automatically with the permissions granted (for example, M365 sign-in activity without Entra ID P1). They are shown so you know the blind spot exists — silence is never mistaken for "all clear".
+Info findings labelled **Manual review** are areas TenantWatch could not assess automatically with the permissions granted (for example, the M365 sign-in log without Entra ID P1, or per-mailbox forwarding without an Exchange mailbox read). They are shown so you know the blind spot exists — silence is never mistaken for "all clear".
 
 ## Alerts
 
