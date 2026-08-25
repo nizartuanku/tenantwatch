@@ -106,6 +106,7 @@
 
 <script>
 const $=id=>document.getElementById(id);
+const SEV_CLASS={critical:'crit',high:'high',medium:'med',low:'low',info:'info'};
 async function jget(u){const r=await fetch(u);return r.ok?r.json():Promise.reject(await r.json().catch(()=>({})))}
 async function jsend(m,u,b){const r=await fetch(u,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});const d=await r.json().catch(()=>({}));if(!r.ok)throw d;return d}
 
@@ -133,7 +134,11 @@ async function refresh(){
     f.sort((a,b)=>(order[a.severity]-order[b.severity]));
     $('findings').innerHTML = f.length? f.map(x=>{
       const sv=x.severity;
-      return `<div class="finding ${sv}"><div class="fhead"><span class="sev ${sv}">${sv}</span><span class="ftitle">${esc(x.title)}</span></div><div class="frem">→ ${esc(x.remediation)}</div><div class="ftarget">${esc(x.target)}</div></div>`;
+      // The API speaks full words ("critical", "medium"); the stylesheet is
+      // keyed on short names. Without this map a Critical finding gets no
+      // colour at all — the most serious finding looking the least serious.
+      const cls=SEV_CLASS[sv]||'info';
+      return `<div class="finding ${cls}"><div class="fhead"><span class="sev ${cls}">${sv}</span><span class="ftitle">${esc(x.title)}</span></div><div class="frem">→ ${esc(x.remediation)}</div><div class="ftarget">${esc(x.target)}</div></div>`;
     }).join('') : '<div class="empty">No findings. Add a tenant and TenantWatch will assess its posture on the next scan.</div>';
   }catch(e){}
 }
