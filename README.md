@@ -13,7 +13,25 @@ tenantwatch -creds tenants.json   # read-only credentials for your tenants
 
 Add a tenant as `m365:contoso.onmicrosoft.com` or `gws:contoso.co.id`.
 
-## What it checks
+![TenantWatch: unpack, run, and the first scan landing](docs/demo.gif)
+
+*Real run, not a mock-up: one binary, the dashboard on localhost, and the findings the check engine actually produced for a demo tenant.*
+
+## New in 0.2.0 — Sign-in Watch
+
+Configuration checks tell you the door is unlocked. The sign-in log tells you somebody walked through it. 0.2.0 reads the last 7 days of sign-in activity and turns four patterns into findings — with no new database, no baseline to train, and no data leaving your server.
+
+| Check | Severity | Catches |
+|---|---|---|
+| `tenant.signin-legacy-auth` | Critical | A legacy protocol (IMAP/POP/SMTP) **succeeded** — a door that cannot carry MFA, in daily use |
+| `tenant.signin-admin-1fa` | Critical | An administrator completed a real sign-in with a password alone |
+| `tenant.signin-spray` | Critical | Many failures across many accounts from one address — **and then one succeeded** |
+| `tenant.signin-country-hop` | High | One account signing in from two countries too close together to be travel |
+| `tenant.signin-suspicious` | High | Sign-ins the provider itself flagged as suspicious |
+
+The difference between `tenant.legacy-auth` (High) and `tenant.signin-legacy-auth` (Critical) is the difference between a policy that permits something and a log that proves it happened.
+
+## What else it checks
 
 | Check | Severity | Catches |
 |---|---|---|
@@ -28,11 +46,14 @@ Add a tenant as `m365:contoso.onmicrosoft.com` or `gws:contoso.co.id`.
 | `tenant.no-conditional-access` | Medium | No enforced conditional-access policy (M365) |
 | `tenant.inactive-user` | Low | Enabled accounts unused for 90+ days |
 
-## Honest limits (v0)
+## Honest limits
 
-TenantWatch tells you what it *couldn't* assess instead of pretending everything it didn't read is fine — those show up as `Manual review` info findings. In v0:
+TenantWatch tells you what it *couldn't* assess instead of pretending everything it didn't read is fine — those show up as `Manual review` info findings. A tenant that cannot be assessed is told so, in the dashboard, in plain words; it never gets a clean bill of health it did not earn.
 
-- **Microsoft 365**: sign-in-activity (inactive accounts) needs Entra ID P1; per-mailbox external forwarding needs an Exchange mailbox read — both are surfaced as manual-review notes unless the permissions are present.
+- **Sign-in Watch on Microsoft 365 needs Entra ID P1 or P2.** Microsoft gates `/auditLogs/signIns` behind premium licensing, and P1 ships with Microsoft 365 **Business Premium** but *not* with Business Basic or Business Standard. On a tenant without it, every sign-in check stays silent and the dashboard says exactly why. All configuration checks are unaffected.
+- **Sign-in Watch on Google Workspace has two blind spots Google itself creates**: the login audit reports no country per event (so `signin-country-hop` cannot run) and no per-event authentication strength (so `signin-admin-1fa` cannot run). Both are reported as unassessed rather than dressed up. In exchange, Google publishes its own `is_suspicious` verdict, which `tenant.signin-suspicious` surfaces.
+- Sign-in checks read a **7-day window** each scan and judge it as a whole — there is no stored baseline and no learning period, so the first scan is as useful as the hundredth. Very large tenants are sampled newest-first, and the dashboard says when that happened.
+- **Microsoft 365**: per-mailbox external forwarding needs an Exchange mailbox read — surfaced as a manual-review note unless the permission is present.
 - **Google Workspace**: OAuth token audit needs the Reports API; Drive external-sharing policy needs Drive settings; per-user IMAP/POP is a Gmail setting — surfaced as manual-review notes.
 - Email authentication (SPF/DKIM/DMARC) is read from public DNS; DKIM is best-effort (selectors vary), so its absence is reported as "not detected", never as broken.
 - Unlike the rest of the Hexward line, TenantWatch needs outbound access to the Microsoft Graph / Google APIs (it reads *your* tenant, read-only). Credentials and findings stay on your server.
