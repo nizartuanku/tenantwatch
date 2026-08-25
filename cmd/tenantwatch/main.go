@@ -26,7 +26,6 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/nizartuanku/tenantwatch/license"
 	"github.com/nizartuanku/tenantwatch/notify"
 	"github.com/nizartuanku/tenantwatch/sched"
 	"github.com/nizartuanku/tenantwatch/store"
@@ -39,15 +38,6 @@ import (
 // Empty → every key invalid → permanent free edition (this open-source build).
 var issuerPublicKeyB64 = ""
 
-// tenantwatchTierLimits: free = 1 tenant, Pro = 10, Team = unlimited.
-var tenantwatchTierLimits = map[license.Tier]license.Limits{
-	license.TierFree: {MaxTargets: 1, RetentionDays: 30, Channels: []string{"webhook", "syslog"}},
-	license.TierPro: {MaxTargets: 10, RetentionDays: 365,
-		Channels: []string{"webhook", "syslog", "email", "slack", "telegram"}, CustomInterval: true, ScanNow: true},
-	license.TierTeam: {MaxTargets: 0, RetentionDays: 0,
-		Channels:  []string{"webhook", "syslog", "email", "slack", "telegram", "pagerduty", "teams"},
-		MultiUser: true, CustomInterval: true, ScanNow: true},
-}
 
 func main() {
 	listen := flag.String("listen", "127.0.0.1:8430", "dashboard listen address")
@@ -98,7 +88,7 @@ func main() {
 	}
 	server := web.NewServer(module.Describe(), st, scheduler, pub, *licFile)
 	server.Targets = st
-	server.TierLimits = tenantwatchTierLimits
+	server.TierLimits = tenantwatch.TierLimits
 
 	var channels []notify.Channel
 	if *webhook != "" {
