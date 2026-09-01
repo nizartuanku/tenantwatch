@@ -67,7 +67,7 @@ TenantWatch tells you what it *couldn't* assess instead of pretending everything
 | Scan now / custom interval | — | ✓ | ✓ |
 | Channels | webhook, syslog | + email, Slack, Telegram | + PagerDuty, Teams |
 
-The free edition is Apache-2.0 and fully functional for one tenant. **Pro and Team** (licensed builds, offline activation): **[whop.com/tenantwatch](https://whop.com/tenantwatch)** — 14-day trial.
+The free edition is Apache-2.0 and fully functional for one tenant. **Pro and Team** (licensed builds, offline activation): **[whop.com/nizar-tuanku/tenantwatch?utm_source=github](https://whop.com/nizar-tuanku/tenantwatch?utm_source=github)** — 14-day trial.
 
 ## Install
 
