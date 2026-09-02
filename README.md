@@ -91,4 +91,4 @@ More from Nizar Tuanku: [YouTube](https://www.youtube.com/@nizartuanku7102) · [
 
 ## License
 
-Apache-2.0 (free edition). See [LICENSE](LICENSE).
+Apache-2.0 (free edition). See [LICENSE.txt](LICENSE.txt).
