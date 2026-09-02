@@ -38,7 +38,6 @@ import (
 // Empty → every key invalid → permanent free edition (this open-source build).
 var issuerPublicKeyB64 = ""
 
-
 func main() {
 	listen := flag.String("listen", "127.0.0.1:8430", "dashboard listen address")
 	dbPath := flag.String("db", "tenantwatch.db", "SQLite database path")
