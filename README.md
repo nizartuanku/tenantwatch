@@ -69,6 +69,8 @@ TenantWatch tells you what it *couldn't* assess instead of pretending everything
 
 The free edition is Apache-2.0 and fully functional for one tenant. **Pro and Team** (licensed builds, offline activation): **[whop.com/nizar-tuanku/tenantwatch?utm_source=github](https://whop.com/nizar-tuanku/tenantwatch?utm_source=github)** — 14-day trial.
 
+**Whop sells paid licences only.** Free: github.com/nizartuanku/tenantwatch — this repository is the free edition, Apache-2.0, no time limit; nothing on Whop is free, so try it here first.
+
 ## Install
 
 See [docs/INSTALL.md](docs/INSTALL.md) for the read-only app-registration (M365) and service-account (Google Workspace) setup, and [docs/USER-GUIDE.md](docs/USER-GUIDE.md) for day-to-day use. Quick start:
