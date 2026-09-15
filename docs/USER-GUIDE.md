@@ -41,6 +41,10 @@ Info findings labelled **Manual review** are areas TenantWatch could not assess 
 
 - `-webhook https://…` posts a structured JSON digest on new/resolved findings.
 - `-syslog host:5514` emits one syslog line per finding. Point it at [Loglight](https://github.com/nizartuanku/loglight) to correlate a posture change with live log activity.
+- `-slack-webhook https://hooks.slack.com/…` posts the same digest to a Slack channel. Pro and Team.
+- `-telegram-token <bot token> -telegram-chat <chat id>` sends it through a Telegram bot. Both flags are required together. Pro and Team.
+
+Webhook and syslog are part of every edition. The chat channels belong to Pro and Team: on the free edition the binary refuses the flag at startup and tells you so, rather than starting up and quietly never sending — an alert channel that fails silently is worse than no alert channel at all.
 - Email / Slack / Telegram / PagerDuty / Teams are Pro/Team channels.
 
 ## Tiers
