@@ -46,6 +46,9 @@ func main() {
 	webhook := flag.String("webhook", "", "webhook URL for alerts")
 	syslogAddr := flag.String("syslog", "", "syslog collector host:port (point at Loglight to correlate across products)")
 	syslogNet := flag.String("syslog-network", "udp", "syslog transport: udp or tcp")
+	slackURL := flag.String("slack-webhook", "", "Slack incoming-webhook URL for alerts (Pro and Team)")
+	tgToken := flag.String("telegram-token", "", "Telegram bot token for alerts (Pro and Team)")
+	tgChat := flag.String("telegram-chat", "", "Telegram chat ID for alerts (Pro and Team)")
 	flag.Parse()
 
 	creds, err := tenantwatch.LoadCreds(*credsPath)
@@ -89,12 +92,32 @@ func main() {
 	server.Targets = st
 	server.TierLimits = tenantwatch.TierLimits
 
+	// Notification channels, gated by the edition the activation grants.
+	// A channel this edition does not include is refused loudly at startup
+	// rather than accepted and then silently never sent: a chat channel that
+	// never fires looks exactly like a quiet week.
+	act := server.Activation()
 	var channels []notify.Channel
 	if *webhook != "" {
 		channels = append(channels, &notify.WebhookChannel{URL: *webhook})
 	}
 	if *syslogAddr != "" {
 		channels = append(channels, &notify.SyslogChannel{Addr: *syslogAddr, Network: *syslogNet})
+	}
+	if *slackURL != "" {
+		if !tenantwatch.AllowsChannel(act.Tier, "slack") {
+			fatal(upgradeNeeded("-slack-webhook", "Slack alerts"))
+		}
+		channels = append(channels, &notify.SlackChannel{WebhookURL: *slackURL})
+	}
+	if *tgToken != "" || *tgChat != "" {
+		if !tenantwatch.AllowsChannel(act.Tier, "telegram") {
+			fatal(upgradeNeeded("-telegram-token/-telegram-chat", "Telegram alerts"))
+		}
+		if *tgToken == "" || *tgChat == "" {
+			fatal("telegram needs both -telegram-token and -telegram-chat")
+		}
+		channels = append(channels, &notify.TelegramChannel{BotToken: *tgToken, ChatID: *tgChat})
 	}
 	if len(channels) > 0 {
 		disp := notify.NewDispatcher(notify.Config{}, channels...)
@@ -122,6 +145,16 @@ func main() {
 	if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		fatal(err.Error())
 	}
+}
+
+// upgradeNeeded renders the one upgrade sentence used everywhere in the line:
+// what was asked for, which editions include it, and where to get one. The
+// product URL is the long form; plan ids never appear in user-facing text.
+func upgradeNeeded(flagName, what string) string {
+	return fmt.Sprintf("%s needs %s, which are part of the Pro and Team editions. "+
+		"The free edition sends to webhook and syslog. "+
+		"Upgrade at https://whop.com/nizar-tuanku/tenantwatch?utm_source=app",
+		flagName, what)
 }
 
 func fatal(msg string) {
