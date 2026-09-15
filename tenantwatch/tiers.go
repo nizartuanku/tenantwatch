@@ -39,3 +39,27 @@ var TierLimits = map[license.Tier]license.Limits{
 		ScanNow:        true,
 	},
 }
+
+// AllowsChannel reports whether the named notification channel is included in
+// the edition the given tier buys.
+//
+// It reads TierLimits above, not license.TierLimits. The two tables differ —
+// TenantWatch's free edition covers one tenant, the engine's generic table
+// assumes a cheap target — and a gate that consults the wrong table would
+// silently sell, or silently refuse, the wrong thing. Resolve the product's own
+// table here so there is exactly one answer to "is Slack part of this edition".
+//
+// An unknown tier in a signed key falls back to the free edition: the safest
+// floor, and the same rule limitsFor applies to capacity.
+func AllowsChannel(t license.Tier, name string) bool {
+	lim, ok := TierLimits[t]
+	if !ok {
+		lim = TierLimits[license.TierFree]
+	}
+	for _, c := range lim.Channels {
+		if c == name {
+			return true
+		}
+	}
+	return false
+}

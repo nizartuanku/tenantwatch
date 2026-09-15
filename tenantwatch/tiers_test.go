@@ -56,3 +56,51 @@ func TestPaidTiersBuySomething(t *testing.T) {
 		}
 	}
 }
+
+func TestAllowsChannelFollowsTheProductTable(t *testing.T) {
+	// Free buys the two channels a buyer can wire to anything: a webhook and
+	// syslog. The chat channels are what Pro is for, so a free binary must
+	// refuse them rather than accept the flag and stay silent.
+	for _, name := range []string{"webhook", "syslog"} {
+		if !AllowsChannel(license.TierFree, name) {
+			t.Errorf("free edition should include %q", name)
+		}
+	}
+	for _, name := range []string{"slack", "telegram", "email", "pagerduty", "teams"} {
+		if AllowsChannel(license.TierFree, name) {
+			t.Errorf("free edition must not include %q", name)
+		}
+	}
+
+	// Pro adds the chat channels; PagerDuty and Teams stay behind Team.
+	for _, name := range []string{"webhook", "syslog", "slack", "telegram", "email"} {
+		if !AllowsChannel(license.TierPro, name) {
+			t.Errorf("pro edition should include %q", name)
+		}
+	}
+	for _, name := range []string{"pagerduty", "teams"} {
+		if AllowsChannel(license.TierPro, name) {
+			t.Errorf("pro edition must not include %q", name)
+		}
+	}
+	for _, name := range []string{"pagerduty", "teams"} {
+		if !AllowsChannel(license.TierTeam, name) {
+			t.Errorf("team edition should include %q", name)
+		}
+	}
+
+	// A tier this build does not know about is not a free pass: an unsigned or
+	// forward-dated key falls to the free edition, never to the widest one.
+	if AllowsChannel(license.Tier("enterprise"), "slack") {
+		t.Error("unknown tier must fall back to the free edition")
+	}
+	if !AllowsChannel(license.Tier("enterprise"), "webhook") {
+		t.Error("unknown tier should still keep the free channels")
+	}
+
+	// The gate must read this table, not the engine's generic one. If the two
+	// ever agree by accident, this test still pins the product's own answer.
+	if got := TierLimits[license.TierFree].MaxTargets; got != 1 {
+		t.Errorf("free edition covers one tenant, table says %d", got)
+	}
+}
