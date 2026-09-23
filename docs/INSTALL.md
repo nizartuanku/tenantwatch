@@ -6,7 +6,7 @@ TenantWatch reads your tenant **read-only**. You grant it read-only credentials 
 
 ```sh
 sha256sum -c SHA256SUMS
-tar xzf tenantwatch-free-0.2.0-linux-amd64.tar.gz && cd tenantwatch-0.2.0
+tar xzf tenantwatch-free-0.2.1-linux-amd64.tar.gz && cd tenantwatch-0.2.1
 cp tenants.example.json tenants.json
 ./tenantwatch -creds tenants.json          # dashboard on http://127.0.0.1:8430
 ```
