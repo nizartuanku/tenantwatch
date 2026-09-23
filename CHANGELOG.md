@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.1 — 2026-09-23
 
 - **Slack and Telegram alerts, and an honest edition boundary.** Both channels are wired to real flags (`-slack-webhook`, `-telegram-token` / `-telegram-chat`) and are Pro and Team features. The free edition does not silently drop them and does not pretend to send: it refuses the flag at startup, names the edition that carries the channel, and links the product page. Webhook and syslog remain available in every edition. The flags are documented in the user guide next to the channels that were already there.
 - **`scripts/first-run.sh` — one command from a clean machine to a working dashboard.** It resolves the latest release at run time rather than pinning a tag, verifies the download against `SHA256SUMS` with no `--ignore-missing`, extracts, starts the binary and polls the dashboard until it answers. If the port is already taken it says so instead of letting the binary exit a second later and read like a broken product (`FIRST_RUN_PORT` overrides). Step 1 uses the unauthenticated GitHub API, which allows 60 calls per hour per address; when that runs out the script now names the rate limit instead of reporting "cannot reach".
