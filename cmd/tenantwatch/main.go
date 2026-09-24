@@ -49,6 +49,10 @@ func main() {
 	slackURL := flag.String("slack-webhook", "", "Slack incoming-webhook URL for alerts (Pro and Team)")
 	tgToken := flag.String("telegram-token", "", "Telegram bot token for alerts (Pro and Team)")
 	tgChat := flag.String("telegram-chat", "", "Telegram chat ID for alerts (Pro and Team)")
+	aiURL := flag.String("ai-assist-url", os.Getenv("TENANTWATCH_AI_ASSIST_URL"), "optional hexward-ai sidecar URL for AI-narrated explanations, e.g. http://127.0.0.1:8435 (off when empty)")
+	aiKeyFile := flag.String("ai-assist-key-file", os.Getenv("TENANTWATCH_AI_ASSIST_KEY_FILE"), "API key file for a dedicated AI host or your own OpenAI-compatible endpoint (Pro/Team)")
+	aiLang := flag.String("ai-assist-lang", os.Getenv("TENANTWATCH_AI_ASSIST_LANG"), "language of AI explanations: en (default) or id")
+	aiNoThinking := flag.Bool("ai-assist-no-thinking", os.Getenv("TENANTWATCH_AI_ASSIST_NO_THINKING") == "1", "disable reasoning mode (Qwen3 enterprise profiles)")
 	flag.Parse()
 
 	creds, err := tenantwatch.LoadCreds(*credsPath)
@@ -89,6 +93,16 @@ func main() {
 		}
 	}
 	server := web.NewServer(module.Describe(), st, scheduler, pub, *licFile)
+
+	aiAssist, aiErr := web.NewAIAssist(web.AIConfig{URL: *aiURL, KeyFile: *aiKeyFile, Language: *aiLang, NoThinking: *aiNoThinking})
+	if aiErr != nil {
+		fmt.Fprintln(os.Stderr, "tenantwatch: "+aiErr.Error())
+		os.Exit(2)
+	}
+	server.AI = aiAssist
+	if aiAssist != nil {
+		fmt.Fprintf(os.Stderr, "tenantwatch: AI Assist on — explanations from %s (language %s)\n", aiAssist.Endpoint, aiAssist.Language)
+	}
 	server.Targets = st
 	server.TierLimits = tenantwatch.TierLimits
 

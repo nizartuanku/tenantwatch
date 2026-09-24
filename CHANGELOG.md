@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- **AI Assist (optional): an ✨ Explain button on every finding.** When TenantWatch is started
+  with `-ai-assist-url`, a local [hexward-ai](https://github.com/nizartuanku/hexward-ai) sidecar
+  explains a finding in plain language and lists what to verify. The engine remains the only
+  source of findings and severity. Only one sanitised finding is sent (secret-like evidence keys
+  are dropped). Any AI failure shows a quiet note and changes nothing. Free edition: a sidecar on
+  the same host. Pro/Team: also a dedicated AI host or your own endpoint
+  (`-ai-assist-key-file`). English or Bahasa Indonesia (`-ai-assist-lang`). New endpoints
+  `GET /api/ai` and `POST /api/findings/explain`, covered by tests for: AI off, bad config,
+  sanitising, tier gating, sidecar down, and bad requests.
+
 ## 0.2.1 — 2026-09-23
 
 - **Slack and Telegram alerts, and an honest edition boundary.** Both channels are wired to real flags (`-slack-webhook`, `-telegram-token` / `-telegram-chat`) and are Pro and Team features. The free edition does not silently drop them and does not pretend to send: it refuses the flag at startup, names the edition that carries the channel, and links the product page. Webhook and syslog remain available in every edition. The flags are documented in the user guide next to the channels that were already there.

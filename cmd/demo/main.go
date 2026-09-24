@@ -42,6 +42,7 @@ func main() {
 	// empty-then-filling transition from one running instance instead of
 	// faking it with two screenshots.
 	hold := flag.Duration("hold", 0, "wait this long before adding the demo tenant")
+	aiURL := flag.String("ai-assist-url", "", "optional hexward-ai sidecar URL, to try the Explain button on the demo findings")
 	flag.Parse()
 
 	now := time.Now().UTC()
@@ -65,6 +66,12 @@ func main() {
 	// this it falls back to the engine's generic defaults and the dashboard
 	// advertises ten free tenants instead of one.
 	server.TierLimits = tenantwatch.TierLimits
+	if ai, err := web.NewAIAssist(web.AIConfig{URL: *aiURL}); err != nil {
+		fmt.Fprintln(os.Stderr, "demo: "+err.Error())
+		os.Exit(2)
+	} else {
+		server.AI = ai
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

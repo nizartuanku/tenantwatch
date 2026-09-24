@@ -57,6 +57,14 @@
     header{background:rgba(13,17,23,.9)} select,input{background:#0d1117;color:var(--ink)} button.ghost{background:#21262d}
     .tenant .prov{background:#21262d}
   }
+  /* AI Assist ("Explain this finding"): styled apart from the finding itself so it
+     always reads as narration, never as a new fact from the engine. */
+  button.aibtn{margin-top:9px;padding:5px 11px;font-size:12.5px;background:#eef2f7;color:var(--blue)}
+  .ai-explain{margin-top:9px;padding:10px 12px;border-radius:9px;background:var(--info-bg);border:1px solid var(--line);font-size:13.5px;color:var(--ink2)}
+  .ai-explain.muted{background:transparent;font-style:italic}
+  .ai-text{color:var(--ink)} .ai-verify{margin-top:8px} .ai-verify ul{margin:4px 0 0 18px;padding:0}
+  .ai-disclaimer{margin-top:8px;font-size:11.5px;color:var(--muted)}
+  @media (prefers-color-scheme:dark){button.aibtn{background:#21262d}.ai-explain{background:#16202c}}
 </style>
 </head>
 <body>
@@ -140,7 +148,7 @@ async function refresh(){
       // keyed on short names. Without this map a Critical finding gets no
       // colour at all — the most serious finding looking the least serious.
       const cls=SEV_CLASS[sv]||'info';
-      return `<div class="finding ${cls}"><div class="fhead"><span class="sev ${cls}">${sv}</span><span class="ftitle">${esc(x.title)}</span></div><div class="frem">→ ${esc(x.remediation)}</div><div class="ftarget">${esc(x.target)}</div></div>`;
+      return `<div class="finding ${cls}"><div class="fhead"><span class="sev ${cls}">${sv}</span><span class="ftitle">${esc(x.title)}</span></div><div class="frem">→ ${esc(x.remediation)}</div><div class="ftarget">${esc(x.target)}</div>${aiEnabled?aiButton(x):''}${aiPanel(x)}</div>`;
     }).join('') : '<div class="empty">No findings. Add a tenant and TenantWatch will assess its posture on the next scan.</div>';
   }catch(e){}
 }
@@ -157,6 +165,25 @@ async function rm(c){if(!confirm('Remove '+c+'?'))return;try{await jsend('DELETE
 async function scanNow(){$('scanbtn').disabled=true;try{await jsend('POST','/api/scan')}catch(e){alert(e.error||'Scan failed')}$('scanbtn').disabled=false;setTimeout(refresh,1500)}
 $('prov').addEventListener('change',()=>{$('domain').placeholder=$('prov').value==='gws'?'contoso.co.id':'contoso.onmicrosoft.com'});
 refresh();setInterval(refresh,15000);
+
+// --- AI Assist: "Explain this finding" ---------------------------------------
+// TenantWatch's engine stays the only source of findings and severity. This
+// only asks the optional hexward-ai sidecar to narrate a finding already on
+// screen; off or unreachable means no button or a quiet note, nothing else.
+var aiEnabled=false, aiState={};
+fetch('/api/ai').then(r=>r.json()).then(d=>{aiEnabled=!!d.enabled;refresh()}).catch(()=>{});
+function aiButton(f){const st=aiState[f.fingerprint];const busy=st&&st.status==='loading';
+  return `<button class="aibtn" ${busy?'disabled':''} onclick="explainFinding('${f.fingerprint}')">${busy?'Explaining…':'✨ Explain'}</button>`}
+function aiPanel(f){const st=aiState[f.fingerprint];if(!st)return '';
+  if(st.status==='loading')return `<div class="ai-explain muted">Asking AI Assist to explain this finding. It runs on your own hardware and can take up to a minute.</div>`;
+  if(st.status!=='done')return `<div class="ai-explain muted">${esc(st.message||'AI Assist is not reachable right now.')} The finding above is unaffected.</div>`;
+  const v=(st.whatToVerify||[]).length?`<div class="ai-verify"><b>What to verify:</b><ul>${st.whatToVerify.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'';
+  return `<div class="ai-explain"><div class="ai-text">${esc(st.explanation)}</div>${v}<div class="ai-disclaimer">${esc(st.disclaimer)}</div></div>`}
+async function explainFinding(fp){aiState[fp]={status:'loading'};refresh();
+  try{const d=await jsend('POST','/api/findings/explain',{fingerprint:fp});
+    aiState[fp]=d.available?{status:'done',explanation:d.explanation,whatToVerify:d.what_to_verify,disclaimer:d.disclaimer}:{status:'unavailable',message:d.reason}}
+  catch(e){aiState[fp]={status:'error',message:(e&&e.error)||'AI Assist request failed.'}}
+  refresh()}
 </script>
 </body>
 </html>
