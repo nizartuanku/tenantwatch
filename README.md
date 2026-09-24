@@ -114,7 +114,7 @@ See [docs/INSTALL.md](docs/INSTALL.md) for the read-only app-registration (M365)
 
 ```sh
 # from a release tarball
-tar xzf tenantwatch-free-0.2.1-linux-amd64.tar.gz && cd tenantwatch-0.2.1
+tar xzf tenantwatch-free-0.2.2-linux-amd64.tar.gz && cd tenantwatch-0.2.2
 cp tenants.example.json tenants.json   # fill in your read-only credentials
 ./tenantwatch -creds tenants.json
 # open http://127.0.0.1:8430

@@ -109,10 +109,10 @@ that suggest a door has already been used.
 ## Try it on one tenant
 
 ```
-curl -LO https://github.com/nizartuanku/tenantwatch/releases/latest/download/tenantwatch-free-0.2.1-linux-amd64.tar.gz
+curl -LO https://github.com/nizartuanku/tenantwatch/releases/latest/download/tenantwatch-free-0.2.2-linux-amd64.tar.gz
 curl -LO https://github.com/nizartuanku/tenantwatch/releases/latest/download/SHA256SUMS
-grep 'tenantwatch-free-0.2.1-linux-amd64.tar.gz' SHA256SUMS | sha256sum -c -
-tar xzf tenantwatch-free-0.2.1-linux-amd64.tar.gz && cd tenantwatch-0.2.1
+grep 'tenantwatch-free-0.2.2-linux-amd64.tar.gz' SHA256SUMS | sha256sum -c -
+tar xzf tenantwatch-free-0.2.2-linux-amd64.tar.gz && cd tenantwatch-0.2.2
 cp tenants.example.json tenants.json
 ./tenantwatch -creds tenants.json
 ```
