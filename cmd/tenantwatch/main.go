@@ -26,6 +26,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/nizartuanku/hexward-core/hfs"
 	"github.com/nizartuanku/tenantwatch/notify"
 	"github.com/nizartuanku/tenantwatch/sched"
 	"github.com/nizartuanku/tenantwatch/store"
@@ -43,9 +44,7 @@ func main() {
 	dbPath := flag.String("db", "tenantwatch.db", "SQLite database path")
 	licFile := flag.String("license", "tenantwatch-license.key", "license key file")
 	credsPath := flag.String("creds", "tenants.json", "tenant credentials file")
-	webhook := flag.String("webhook", "", "webhook URL for alerts")
-	syslogAddr := flag.String("syslog", "", "syslog collector host:port (point at Loglight to correlate across products)")
-	syslogNet := flag.String("syslog-network", "udp", "syslog transport: udp or tcp")
+	chf := registerChannelFlags(flag.CommandLine)
 	slackURL := flag.String("slack-webhook", "", "Slack incoming-webhook URL for alerts (Pro and Team)")
 	tgToken := flag.String("telegram-token", "", "Telegram bot token for alerts (Pro and Team)")
 	tgChat := flag.String("telegram-chat", "", "Telegram chat ID for alerts (Pro and Team)")
@@ -93,6 +92,8 @@ func main() {
 		}
 	}
 	server := web.NewServer(module.Describe(), st, scheduler, pub, *licFile)
+	server.ExportMeta = hfs.Meta{Product: module.Describe().ID, Version: module.Describe().Version, Host: hostname()}
+	server.ExportEvidence = chf.evidenceMode()
 
 	aiAssist, aiErr := web.NewAIAssist(web.AIConfig{URL: *aiURL, KeyFile: *aiKeyFile, Language: *aiLang, NoThinking: *aiNoThinking})
 	if aiErr != nil {
@@ -111,12 +112,10 @@ func main() {
 	// rather than accepted and then silently never sent: a chat channel that
 	// never fires looks exactly like a quiet week.
 	act := server.Activation()
-	var channels []notify.Channel
-	if *webhook != "" {
-		channels = append(channels, &notify.WebhookChannel{URL: *webhook})
-	}
-	if *syslogAddr != "" {
-		channels = append(channels, &notify.SyslogChannel{Addr: *syslogAddr, Network: *syslogNet})
+	channels, chErr := chf.build(hfs.Meta{Product: module.Describe().ID, Version: module.Describe().Version, Host: hostname()})
+	if chErr != nil {
+		fmt.Fprintln(os.Stderr, "tenantwatch: "+chErr.Error())
+		os.Exit(2)
 	}
 	if *slackURL != "" {
 		if !tenantwatch.AllowsChannel(act.Tier, "slack") {
